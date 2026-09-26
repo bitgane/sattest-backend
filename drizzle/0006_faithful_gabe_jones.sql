@@ -1,0 +1,1 @@
+ALTER TABLE "claims" ADD COLUMN "lnurl_private" boolean DEFAULT false NOT NULL;

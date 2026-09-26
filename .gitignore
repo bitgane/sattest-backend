@@ -1,0 +1,75 @@
+# Node / npm / Yarn
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+.pnp
+.pnp.js
+
+# Build / output
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+*.log.*
+npm-debug.log.*
+yarn-debug.log.*
+yarn-error.log.*
+lerna-debug.log.*
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Database / temp files
+*.sqlite
+*.sqlite-journal
+*.db
+*.db-journal
+
+# Database dumps / backups — may contain live user rows (encrypted NWC URIs,
+# claimant pubkeys). Never commit; restore from the Railway backup instead.
+*.dump
+*.sql.gz
+*.backup
+*-backup-*.sql
+# NOTE: drizzle/ (generated migrations) is NOT ignored — migrations must be
+# committed so production deploys can run `drizzle-kit migrate`.
+
+# Testing / temp
+tmp/
+temp/
+.cache/
+.eslintcache
+.prettiercache
+
+# Docker / containers
+.dockerignore
+Dockerfile*
+docker-compose*
+
+# Misc
+*.bak
+*.swp
+*.swo
+*~
+jest.config.js

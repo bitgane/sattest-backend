@@ -1,0 +1,21 @@
+{
+    // Production build tsconfig — used by `npm run build` and Railway's deploy.
+    // The root tsconfig.json keeps `@types/jest` in the types array (ts-jest
+    // and the IDE need it), but `@types/jest` is a devDependency that Railway's
+    // prod install strips, so a plain `tsc` against the root config fails with
+    // TS2688 ("Cannot find type definition file for 'jest'"). This override:
+    //   - drops `jest` from the types array
+    //   - excludes test sources and __mocks__ from the compile
+    // ts-jest still picks up tests at test time via the root config.
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "node"
+        ]
+    },
+    "exclude": [
+        "node_modules",
+        "**/*.test.ts",
+        "**/__mocks__/**"
+    ]
+}

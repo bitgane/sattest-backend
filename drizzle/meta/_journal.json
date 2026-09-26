@@ -1,0 +1,83 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1776817957531,
+      "tag": "0000_safe_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776863518332,
+      "tag": "0001_small_frightful_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776913569569,
+      "tag": "0002_many_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777002750379,
+      "tag": "0003_tough_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777042025147,
+      "tag": "0004_hard_northstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784217919853,
+      "tag": "0005_normal_darkstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784837712785,
+      "tag": "0006_faithful_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785433050900,
+      "tag": "0007_pale_devos",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786031023935,
+      "tag": "0008_medical_green_goblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786462265562,
+      "tag": "0009_magenta_the_anarchist",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787587935347,
+      "tag": "0010_dazzling_captain_america",
+      "breakpoints": true
+    }
+  ]
+}
