@@ -29,8 +29,9 @@ function isDevelopment(): boolean {
 /**
  * True for any address we refuse to fetch: loopback, RFC-1918 private,
  * link-local (incl. cloud metadata), CGNAT, multicast/reserved, and the
- * unspecified address. Anything we can't parse as an IP is treated as blocked
- * (fail closed).
+ * unspecified address. IPv6 forms that embed an IPv4 address (mapped,
+ * compatible, NAT64, 6to4) are judged by that IPv4 address. Anything we can't
+ * parse as an IP is treated as blocked (fail closed).
  */
 export function isBlockedAddress(addr: string): boolean {
     const family = isIP(addr);
@@ -56,15 +57,76 @@ function isBlockedIPv4(addr: string): boolean {
     return false;
 }
 
+/**
+ * Classifies on the parsed 16-bit groups, never on the string. Text matching
+ * missed the forms that matter: Node's URL parser rewrites
+ * `[::ffff:169.254.169.254]` to `::ffff:a9fe:a9fe`, so a dotted-quad-only
+ * check let the metadata address through, and `startsWith('fe80')` covered
+ * only a sliver of the fe80::/10 link-local range.
+ */
 function isBlockedIPv6(raw: string): boolean {
-    const addr = raw.toLowerCase();
-    if (addr === '::1' || addr === '::') return true; // loopback / unspecified
-    if (addr.startsWith('fe80')) return true; // link-local
-    if (addr.startsWith('fc') || addr.startsWith('fd')) return true; // fc00::/7 unique-local
-    // IPv4-mapped (::ffff:a.b.c.d) — re-check the embedded v4 address.
-    const mapped = addr.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
-    if (mapped) return isBlockedIPv4(mapped[1]);
+    const h = parseIPv6(raw);
+    if (!h) return true; // fail closed
+
+    if (h.every((g) => g === 0)) return true; // :: unspecified
+    if (h.slice(0, 7).every((g) => g === 0) && h[7] === 1) return true; // ::1 loopback
+
+    // Forms that carry an IPv4 address the packet can actually reach: judge
+    // them by that address, with the IPv4 rules.
+    const embedded = embeddedIPv4(h);
+    if (embedded) return isBlockedIPv4(embedded);
+    // NAT64 local-use 64:ff9b:1::/48 (RFC 8215): the embedded IPv4 position
+    // depends on the operator's prefix length, so it can't be decoded reliably.
+    if (h[0] === 0x64 && h[1] === 0xff9b && h[2] === 1) return true;
+
+    if ((h[0] & 0xfe00) === 0xfc00) return true; // fc00::/7 unique-local
+    if ((h[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+    if ((h[0] & 0xffc0) === 0xfec0) return true; // fec0::/10 site-local (deprecated)
+    if ((h[0] & 0xff00) === 0xff00) return true; // ff00::/8 multicast
     return false;
+}
+
+/** The dotted-quad IPv4 address carried by an IPv6 address, if any. */
+function embeddedIPv4(h: number[]): string | undefined {
+    const zero = (from: number, to: number) => h.slice(from, to).every((g) => g === 0);
+    const v4 = (hi: number, lo: number) => `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
+
+    if (zero(0, 5) && h[5] === 0xffff) return v4(h[6], h[7]); // ::ffff:0:0/96 IPv4-mapped
+    if (zero(0, 4) && h[4] === 0xffff && h[5] === 0) return v4(h[6], h[7]); // ::ffff:0:0:0/96 IPv4-translated
+    if (zero(0, 6)) return v4(h[6], h[7]); // ::/96 IPv4-compatible (deprecated)
+    if (h[0] === 0x64 && h[1] === 0xff9b && zero(2, 6)) return v4(h[6], h[7]); // 64:ff9b::/96 NAT64
+    if (h[0] === 0x2002) return v4(h[1], h[2]); // 2002::/16 6to4
+    return undefined;
+}
+
+/**
+ * Expands an IPv6 literal to its eight 16-bit groups, or undefined if it isn't
+ * one. Handles `::` compression, a trailing dotted quad, upper case, and a
+ * `%zone` suffix.
+ */
+function parseIPv6(raw: string): number[] | undefined {
+    let addr = raw.toLowerCase();
+    const zone = addr.indexOf('%');
+    if (zone !== -1) addr = addr.slice(0, zone);
+
+    // A trailing dotted quad (::ffff:1.2.3.4) becomes two hex groups.
+    const dotted = addr.match(/^(.*:)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (dotted) {
+        const [a, b, c, d] = dotted.slice(2).map(Number);
+        if ([a, b, c, d].some((n) => n > 255)) return undefined;
+        addr = `${dotted[1]}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+    }
+
+    const halves = addr.split('::');
+    if (halves.length > 2) return undefined;
+    const head = halves[0] ? halves[0].split(':') : [];
+    const tail = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+    const gap = 8 - head.length - tail.length;
+    if (halves.length === 2 ? gap < 1 : gap !== 0) return undefined;
+
+    const groups = [...head, ...Array<string>(halves.length === 2 ? gap : 0).fill('0'), ...tail];
+    if (groups.some((g) => !/^[0-9a-f]{1,4}$/.test(g))) return undefined;
+    return groups.map((g) => parseInt(g, 16));
 }
 
 /**
