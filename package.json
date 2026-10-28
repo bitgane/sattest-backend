@@ -37,7 +37,7 @@
     "nostr-tools": "^2.23.1",
     "pg": "^8.17.2",
     "typescript": "^5.9.3",
-    "zod": "^4.3.6"
+    "zod": "^4.6.6"
   },
   "overrides": {
     "@noble/curves": "1.9.6",
